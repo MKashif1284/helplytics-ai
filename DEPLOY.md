@@ -1,59 +1,56 @@
-# 🚀 Helplytics AI — Deployment Guide
+# 🚀 Helplytics AI — Deployment Guide (FREE, No Card Needed)
 
-## Complete deployment in 3 steps: GitHub → Render (Backend) → Netlify (Frontend)
-
----
-
-## Step 1: Push to GitHub
-
-1. Go to **[github.com/new](https://github.com/new)**
-2. Create a new repository named: `helplytics-ai`
-3. Keep it **Public**, don't add README/gitignore (we already have them)
-4. Copy the repo URL and run these commands:
-
-```bash
-cd E:\Hackathon
-git remote add origin https://github.com/YOUR_USERNAME/helplytics-ai.git
-git branch -M main
-git push -u origin main
-```
+## Deploy in 3 steps: GitHub → Vercel (Backend) → Netlify (Frontend)
 
 ---
 
-## Step 2: Deploy Backend on Render.com (Free)
+## ✅ Step 1: GitHub (DONE)
+Repo: https://github.com/MKashif1284/helplytics-ai
 
-1. Go to **[render.com](https://render.com)** → Sign up with GitHub
-2. Click **"New +"** → **"Web Service"**
-3. Connect your `helplytics-ai` GitHub repo
+---
+
+## Step 2: Free MongoDB Atlas Database
+
+1. Go to **[mongodb.com/atlas](https://www.mongodb.com/cloud/atlas/register)** → Sign up (FREE, no card)
+2. Create a **FREE Shared Cluster** (M0)
+3. Set **Database User**: username `helplytics` / password `helplytics2026`
+4. Set **Network Access**: Add `0.0.0.0/0` (allow all IPs)
+5. Click **Connect → Drivers** → Copy the connection string:
+   ```
+   mongodb+srv://helplytics:helplytics2026@cluster0.xxxxx.mongodb.net/helplytics?retryWrites=true&w=majority
+   ```
+6. After cluster is ready, open **MongoDB Compass** or **Atlas Shell** and run the seed (or the server will auto-seed)
+
+---
+
+## Step 3: Deploy Backend on Vercel (FREE, No Card)
+
+1. Go to **[vercel.com](https://vercel.com)** → Sign up with GitHub (FREE)
+2. Click **"Add New Project"**
+3. Import your `helplytics-ai` repo
 4. Configure:
    | Setting | Value |
    |---------|-------|
-   | **Name** | `helplytics-ai-backend` |
    | **Root Directory** | `server` |
-   | **Runtime** | `Node` |
-   | **Build Command** | `npm install` |
-   | **Start Command** | `node index.js` |
-   | **Plan** | `Free` |
+   | **Framework Preset** | `Other` |
 
 5. Add **Environment Variables**:
    | Key | Value |
    |-----|-------|
-   | `PORT` | `10000` |
+   | `MONGODB_URI` | `mongodb+srv://helplytics:helplytics2026@cluster0.xxxxx.mongodb.net/helplytics` |
    | `JWT_SECRET` | `helplytics_ai_secret_key_2026` |
    | `NODE_ENV` | `production` |
+   | `CLIENT_URL` | `*` |
 
-6. Click **"Create Web Service"**
-7. Wait for deploy → Copy the URL (e.g. `https://helplytics-ai-backend.onrender.com`)
-
-> **Note:** The backend uses in-memory MongoDB, so data resets on restart. This is fine for hackathon demos!
+6. Click **Deploy** → Copy URL (e.g. `https://helplytics-ai-backend.vercel.app`)
 
 ---
 
-## Step 3: Deploy Frontend on Netlify
+## Step 4: Deploy Frontend on Netlify (FREE, No Card)
 
 1. Go to **[app.netlify.com](https://app.netlify.com)** → Sign up with GitHub
 2. Click **"Add new site"** → **"Import an existing project"**
-3. Connect your `helplytics-ai` GitHub repo
+3. Select your `helplytics-ai` repo
 4. Configure:
    | Setting | Value |
    |---------|-------|
@@ -61,25 +58,21 @@ git push -u origin main
    | **Build command** | `npm run build` |
    | **Publish directory** | `client/dist` |
 
-5. Add **Environment Variable** (click "Show advanced"):
+5. Click **"Show advanced"** → Add Environment Variable:
    | Key | Value |
    |-----|-------|
-   | `VITE_API_URL` | `https://YOUR-RENDER-URL.onrender.com/api` |
+   | `VITE_API_URL` | `https://YOUR-VERCEL-URL.vercel.app/api` |
 
-   > Replace `YOUR-RENDER-URL` with your actual Render backend URL from Step 2
-
-6. Click **"Deploy site"**
-7. Wait for build → Your site is live! 🎉
+6. Click **"Deploy site"** → Done! 🎉
 
 ---
 
-## After Deployment
+## 🎯 After Deployment
 
-- **Frontend URL**: `https://your-site-name.netlify.app`
-- **Backend URL**: `https://helplytics-ai-backend.onrender.com`
+- **Frontend**: `https://your-site.netlify.app`
+- **Backend**: `https://your-backend.vercel.app`
 - **Demo Login**: `ahmed@helplytics.com` / `password123`
 
-### Important Notes
-- Render free tier spins down after 15 min of inactivity. First request may take 30-60 seconds.
-- Data resets when the backend restarts (in-memory MongoDB).
-- Every push to `main` branch auto-deploys on both Render and Netlify.
+### First Time Setup
+After backend deploys, visit `https://your-backend.vercel.app/api/health` to verify it's running.
+The database will need to be seeded — hit the signup/login endpoints to create users.

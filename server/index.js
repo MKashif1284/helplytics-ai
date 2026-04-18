@@ -32,35 +32,70 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', platform: 'Helplytics AI' });
 });
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({ message: 'Helplytics AI Backend API', status: 'running' });
+});
+
 const PORT = process.env.PORT || 5000;
 
-async function startServer() {
+// MongoDB connection with retry
+let isConnected = false;
+
+async function connectDB() {
+  if (isConnected) return;
+
   let mongoUri = process.env.MONGODB_URI;
 
-  try {
-    // Try connecting to local MongoDB first
-    await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 3000 });
-    console.log('✅ MongoDB connected (local)');
-  } catch (err) {
-    console.log('⚠️  Local MongoDB not available, starting in-memory server...');
-    const { MongoMemoryServer } = require('mongodb-memory-server');
-    const mongod = await MongoMemoryServer.create();
-    mongoUri = mongod.getUri();
-    await mongoose.connect(mongoUri);
-    console.log('✅ MongoDB connected (in-memory)');
+  if (mongoUri && mongoUri !== 'mongodb://127.0.0.1:27017/helplytics') {
+    // Production — use real MongoDB (Atlas)
+    try {
+      await mongoose.connect(mongoUri);
+      isConnected = true;
+      console.log('✅ MongoDB connected (Atlas)');
+    } catch (err) {
+      console.error('❌ MongoDB Atlas connection failed:', err.message);
+    }
+  } else {
+    // Local development — try local then in-memory
+    try {
+      await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 3000 });
+      isConnected = true;
+      console.log('✅ MongoDB connected (local)');
+    } catch (err) {
+      console.log('⚠️  Local MongoDB not available, starting in-memory server...');
+      const { MongoMemoryServer } = require('mongodb-memory-server');
+      const mongod = await MongoMemoryServer.create();
+      mongoUri = mongod.getUri();
+      await mongoose.connect(mongoUri);
+      isConnected = true;
+      console.log('✅ MongoDB connected (in-memory)');
 
-    // Auto-seed the database
-    console.log('🌱 Seeding database...');
-    await require('./seedFn')();
-    console.log('🌱 Seed complete!');
+      // Auto-seed the database
+      console.log('🌱 Seeding database...');
+      await require('./seedFn')();
+      console.log('🌱 Seed complete!');
+    }
   }
+}
 
-  app.listen(PORT, () => {
-    console.log(`🚀 Helplytics AI server running on port ${PORT}`);
+// For Vercel serverless — connect before each request
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
+// Start server (local dev only, Vercel handles this in production)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  connectDB().then(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 Helplytics AI server running on port ${PORT}`);
+    });
+  }).catch(err => {
+    console.error('❌ Server start error:', err.message);
+    process.exit(1);
   });
 }
 
-startServer().catch(err => {
-  console.error('❌ Server start error:', err.message);
-  process.exit(1);
-});
+// Export for Vercel
+module.exports = app;
