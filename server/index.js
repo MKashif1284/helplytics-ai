@@ -32,6 +32,19 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', platform: 'Helplytics AI' });
 });
 
+// Seed endpoint — hit once after deploy to populate Atlas DB
+app.get('/api/seed', async (req, res) => {
+  try {
+    const User = require('./models/User');
+    const count = await User.countDocuments();
+    if (count > 0) return res.json({ message: 'Already seeded', users: count });
+    await require('./seedFn')();
+    res.json({ message: 'Database seeded successfully!' });
+  } catch (err) {
+    res.status(500).json({ message: 'Seed failed', error: err.message });
+  }
+});
+
 // Root route
 app.get('/', (req, res) => {
   res.json({ message: 'Helplytics AI Backend API', status: 'running' });
